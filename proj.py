@@ -61,8 +61,11 @@ def indexing(D, args=None):
 
 """summarization function as requested"""
 def summarization(d, p, l,o, I, args=None):
-    if not index.open_dir(I): #I is not an index, its a D (collection)
+    try:
+        ix = index.open_dir(I)
+    except index.EmptyIndexError:
         I,_ = indexing(I)
+        
     ix = index.open_dir(I)
     searcher = ix.searcher(weighting=scoring.TF_IDF())
     relevance_scores = {}
@@ -105,4 +108,8 @@ def get_bert_output(tokenizer, model, sentence, mode='cls', optype='sumsum'):
         elif optype == "meanmean": embedding = torch.mean(layers.mean(0).squeeze(), dim=0)    
         else: embedding = torch.mean(layers.sum(0).squeeze(), dim=0)  
     return embedding.detach().numpy()
-    
+
+
+
+if __name__ == "__main__":
+    print(summarization("001.txt",2,None,None, "/text", None))

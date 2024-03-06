@@ -61,9 +61,24 @@ def indexing(D, args=None):
 
 """summarization function as requested"""
 def summarization(d, p, l,o, I, args=None):
-    if not index.open_dir(I):
+    if not index.open_dir(I): #I is not an index, its a D (collection)
         I,_ = indexing(I)
     ix = index.open_dir(I)
+    searcher = ix.searcher(weighting=scoring.TF_IDF())
+    relevance_scores = {}
+    with open(d, "r") as doc:
+        text = preprocess(doc.read())
+        phrases = text.split('.')
+        for i, sentence in enumerate(phrases):
+            query = QueryParser('content', ix.schema).parse(sentence)
+            results = searcher.search(query, limit=1)
+            relevance_scores[i] = results.score if results else 0
+        
+    sorted_sentences = sorted(relevance_scores.items(), key=lambda x: x[1], reverse=(o == 'relevance')) #if relevance
+    
+    selected_sentences = sorted_sentences[:p] if l is None else [pair for pair in sorted_sentences if len(pair[0]) <= l]
+    return selected_sentences
+
     
 "keyword_extraction"
 def keyword_extraction(d,p,I,args):

@@ -53,6 +53,7 @@ def indexing(D, args=None):
     i = 0
     for el in docs:
         with open(el, "r") as doc:
+            doc.readline()
             text = preprocess(doc.read())
             add_doc_to_schema(text, i)
         i+=1
@@ -61,12 +62,15 @@ def indexing(D, args=None):
 
 """summarization function as requested"""
 def summarization(d, p, l,o, I, args=None):
-    if not index.open_dir(I): #I is not an index, its a D (collection)
-        I,_ = indexing(I)
-    ix = index.open_dir(I)
+    try:
+        ix = index.open_dir(I)
+    except index.EmptyIndexError: 
+        I, _ = indexing(I)  # Reindex the collection if the index is empty
+    ix = index.open_dir(I) 
     searcher = ix.searcher(weighting=scoring.TF_IDF())
     relevance_scores = {}
     with open(d, "r") as doc:
+        doc.readline()
         text = preprocess(doc.read())
         phrases = text.split('.')
         for i, sentence in enumerate(phrases):

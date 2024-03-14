@@ -1,8 +1,9 @@
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster import AgglomerativeClustering
-from sklearn.metrics import silhouette_score, adjusted_rand_score
+from sklearn.metrics import silhouette_score, accuracy_score, classification_report
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.model_selection import train_test_split
 import numpy as np
-import matplotlib.pyplot as plt
 import nltk
 
 #A
@@ -10,6 +11,7 @@ import nltk
 def sentence_clustering(d, I=None, args=None):
     score=0
     label =[]
+    scores = []
     with open(d, "r") as doc:
         doc.readline()
         txt = doc.read()
@@ -18,27 +20,17 @@ def sentence_clustering(d, I=None, args=None):
         vectorspace = vectorizer.fit_transform(collection)
         min_cluster = 2
         max_cluster = len(collection)//2
-        cluster_range =range(min_cluster, max_cluster +1)
+        cluster_range = range(min_cluster, max_cluster +1)
     for cluster in cluster_range:
-    #para escolher nr de clsuters testar com varios vs silhouette, valor max é o ideal
         clustering = AgglomerativeClustering(n_clusters=cluster, linkage="average", metric='cosine').fit(vectorspace.toarray())
         silh = silhouette_score(vectorspace, clustering.labels_, metric="cosine")
+        scores.append(silh)
         if silh > score:
             score = silh
             label = clustering.labels_
-    return label
-
-    # Plot silhouette scores
-    plt.figure(figsize=(10, 6))
-    plt.plot(cluster_range, scores, marker='o', linestyle='-')
-    plt.title('Silhouette Score for Different Numbers of Clusters')
-    plt.xlabel('Number of Clusters')
-    plt.ylabel('Silhouette Score')
-    plt.xticks(np.arange(min_cluster, max_cluster + 1, step=1))
-    plt.grid(True)
-    plt.show()
+    return label, cluster_range, scores, min_cluster, max_cluster
     
-c = sentence_clustering("413.txt")
+c, _, _, _, _ = sentence_clustering("413.txt")
 
 def summarization(d, C, I=None, args=None): #usar f1
     n_clusters = max(C)+1
@@ -77,17 +69,19 @@ def keyword_extraction(d, C, I=None, args=None):
         vectorizer = TfidfVectorizer(use_idf=True)
         vectorspace = vectorizer.fit_transform(collection)
     
-    # Sum the TF-IDF scores across all sentences for each term
     term_scores = np.sum(vectorspace, axis=0)
     term_scores = np.asarray(term_scores).ravel()
-    
-    # Get the indices of the terms with the highest sum
     top_term_indices = np.argsort(term_scores)[::-1]
     
-    # Get the actual terms from the vectorizer vocabulary
     vocabulary = np.array(vectorizer.get_feature_names_out())
     top_terms = vocabulary[top_term_indices]
     
     return set(top_terms[:n_keywords])
     
 print(keyword_extraction("413.txt", c))
+
+#B
+
+def feature_extraction(s, d, args=None):
+
+    return
